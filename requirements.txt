@@ -7,3 +7,5 @@ matplotlib
 scikit-learn
 Pillow
 tqdm
+# SAM 2 dependencies (install via git+https://github.com/facebookresearch/segment-anything-2.git)
+# segment-anything-2
