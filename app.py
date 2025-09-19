@@ -5,7 +5,6 @@ Neural Network-Based Image Segmentation Tool
 Main application entry point for image segmentation using neural networks.
 """
 
-import argparse
 import sys
 from pathlib import Path
 
@@ -14,40 +13,15 @@ from modules.segmentation import NeuralImageSegmenter
 from modules.segmentation.config import AVAILABLE_METHODS, DEFAULT_METHOD_SETS
 
 
-def parse_arguments():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description="Neural Network-Based Image Segmentation Tool")
-    
-    parser.add_argument('--methods', nargs='+', choices=list(AVAILABLE_METHODS.keys()),
-                       help='Specific segmentation methods to use')
-    
-    parser.add_argument('--method-set', choices=list(DEFAULT_METHOD_SETS.keys()), default='balanced',
-                       help='Predefined set of methods (default: balanced)')
-    
-    parser.add_argument('--input', type=str, default='data/datasets/dataset_1',
-                       help='Input folder containing images')
-    
-    parser.add_argument('--output', type=str, default='data/output/output_neural',
-                       help='Output folder for results')
-    
-    parser.add_argument('--multi-dataset', action='store_true',
-                       help='Process all datasets in data/datasets/ folder')
-    
-    parser.add_argument('--analyze-only', action='store_true',
-                       help='Only analyze images without processing')
-    
-    return parser.parse_args()
-
-
-def get_selected_methods(args):
+def get_selected_methods(methods=None, method_set='balanced'):
     """Determine which methods to use based on arguments."""
-    if args.methods:
-        return args.methods
+    if methods:
+        return methods
     else:
-        return DEFAULT_METHOD_SETS[args.method_set]
+        return DEFAULT_METHOD_SETS[method_set]
 
 
-def process_single_dataset(segmenter, methods, args):
+def process_single_dataset(segmenter, methods, analyze_only=False):
     """Process a single dataset."""
     if not segmenter.input_folder.exists():
         print(f"Input folder not found: {segmenter.input_folder}")
@@ -71,7 +45,7 @@ def process_single_dataset(segmenter, methods, args):
         segmenter.analyze_image_complexity(image_path)
         print()
     
-    if args.analyze_only:
+    if analyze_only:
         print("Analysis complete. Skipping processing as requested.")
         return True
     
@@ -93,35 +67,41 @@ def process_single_dataset(segmenter, methods, args):
 
 def main():
     """Main function."""
-    args = parse_arguments()
+    # Configuration - modify these values as needed
+    input_folder = 'data/datasets/dataset_1'
+    output_folder = 'data/output/output_neural'
+    methods = None  # Use specific methods, or None to use method_set
+    method_set = 'balanced'  # 'fastest', 'balanced', 'accurate', 'high_quality'
+    multi_dataset = False  # Set to True to process all datasets
+    analyze_only = False  # Set to True to only analyze images
     
     print("Neural Network-Based Image Segmentation Tool")
     print("=" * 60)
     
-    methods = get_selected_methods(args)
-    print(f"Selected methods: {', '.join(methods)}")
-    print(f"Input folder: {args.input}")
-    print(f"Output folder: {args.output}")
+    selected_methods = get_selected_methods(methods, method_set)
+    print(f"Selected methods: {', '.join(selected_methods)}")
+    print(f"Input folder: {input_folder}")
+    print(f"Output folder: {output_folder}")
     print()
     
-    segmenter = NeuralImageSegmenter(input_folder=args.input, output_folder=args.output)
+    segmenter = NeuralImageSegmenter(input_folder=input_folder, output_folder=output_folder)
     
     try:
-        if args.multi_dataset:
+        if multi_dataset:
             print("Multi-dataset processing mode")
             print("-" * 60)
-            segmenter.process_multiple_datasets(methods=methods)
+            segmenter.process_multiple_datasets(methods=selected_methods)
             print("\nMulti-dataset processing complete!")
         else:
             print("Single dataset processing mode")
             print("-" * 60)
-            success = process_single_dataset(segmenter, methods, args)
+            success = process_single_dataset(segmenter, selected_methods, analyze_only)
             if not success:
                 sys.exit(1)
         
         print("\n" + "=" * 60)
         print("Neural Network Methods Used:")
-        for method in methods:
+        for method in selected_methods:
             if method in AVAILABLE_METHODS:
                 info = AVAILABLE_METHODS[method]
                 print(f"  {info['name']} - {info['description']}")

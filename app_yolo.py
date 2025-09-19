@@ -5,7 +5,6 @@ YOLO-based Image Segmentation Tool
 Main application entry point for YOLO-based image segmentation using Ultralytics YOLO models.
 """
 
-import argparse
 import sys
 from pathlib import Path
 
@@ -15,128 +14,23 @@ from modules.segmentation_yolo.config import MODEL_PRESETS, get_preset_config, p
 from modules.segmentation_yolo.models import YOLOModels
 
 
-def parse_arguments():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="YOLO-based Image Segmentation Tool",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Available YOLO Models:
-  yolo11n-seg    - Nano (fastest, 2.9M params)
-  yolo11s-seg    - Small (balanced, 10.1M params)  
-  yolo11m-seg    - Medium (good accuracy, 22.4M params)
-  yolo11l-seg    - Large (high accuracy, 27.6M params)
-  yolo11x-seg    - Extra Large (maximum accuracy, 62.1M params)
-
-Model Presets:
-  fastest        - yolo11n-seg with optimized settings
-  balanced       - yolo11s-seg with balanced settings (default)
-  accurate       - yolo11m-seg with quality settings
-  high_accuracy  - yolo11l-seg with high-quality settings
-  maximum_accuracy - yolo11x-seg with maximum quality settings
-
-Examples:
-  python app_yolo.py                                    # Use balanced preset
-  python app_yolo.py --model yolo11n-seg               # Use specific model
-  python app_yolo.py --preset fastest                  # Use fastest preset
-  python app_yolo.py --conf 0.3 --iou 0.6             # Custom thresholds
-  python app_yolo.py --input custom/path               # Custom input folder
-  python app_yolo.py --multi-dataset --preset accurate # Process all datasets
-  python app_yolo.py --analyze-only                    # Analyze images only
-        """
-    )
-    
-    parser.add_argument(
-        '--model',
-        type=str,
-        choices=YOLOModels.get_available_models(),
-        help='Specific YOLO model to use'
-    )
-    
-    parser.add_argument(
-        '--preset',
-        choices=list(MODEL_PRESETS.keys()),
-        default='balanced',
-        help='Model preset with optimized settings (default: balanced)'
-    )
-    
-    parser.add_argument(
-        '--conf',
-        type=float,
-        help='Confidence threshold (0.0-1.0)'
-    )
-    
-    parser.add_argument(
-        '--iou',
-        type=float,
-        help='IoU threshold for NMS (0.0-1.0)'
-    )
-    
-    parser.add_argument(
-        '--input',
-        type=str,
-        default='data/datasets/dataset_1',
-        help='Input folder containing images (default: data/datasets/dataset_1)'
-    )
-    
-    parser.add_argument(
-        '--output',
-        type=str,
-        default='data/output/output_yolo',
-        help='Output folder for results (default: data/output/output_yolo)'
-    )
-    
-    parser.add_argument(
-        '--multi-dataset',
-        action='store_true',
-        help='Process all datasets in data/datasets/ folder'
-    )
-    
-    parser.add_argument(
-        '--analyze-only',
-        action='store_true',
-        help='Only analyze images without processing'
-    )
-    
-    parser.add_argument(
-        '--list-models',
-        action='store_true',
-        help='List all available YOLO models and exit'
-    )
-    
-    parser.add_argument(
-        '--list-presets',
-        action='store_true',
-        help='List all available presets and exit'
-    )
-    
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        help='Enable verbose output'
-    )
-    
-    return parser.parse_args()
-
-
-def determine_model_and_settings(args):
+def determine_model_and_settings(model=None, preset='balanced', conf=None, iou=None):
     """Determine which model and settings to use based on arguments."""
-    if args.model:
+    if model:
         # Use specific model
-        model = args.model
-        conf = args.conf if args.conf is not None else 0.25
-        iou = args.iou if args.iou is not None else 0.7
+        conf = conf if conf is not None else 0.25
+        iou = iou if iou is not None else 0.7
     else:
         # Use preset
-        preset_config = get_preset_config(args.preset)
+        preset_config = get_preset_config(preset)
         model = preset_config['model']
-        conf = args.conf if args.conf is not None else preset_config['conf_threshold']
-        iou = args.iou if args.iou is not None else preset_config['iou_threshold']
+        conf = conf if conf is not None else preset_config['conf_threshold']
+        iou = iou if iou is not None else preset_config['iou_threshold']
     
     return model, conf, iou
 
 
-def process_single_dataset(segmenter, args):
+def process_single_dataset(segmenter, analyze_only=False):
     """Process a single dataset."""
     if not segmenter.input_folder.exists():
         print(f"❌ Input folder not found: {segmenter.input_folder}")
@@ -159,7 +53,7 @@ def process_single_dataset(segmenter, args):
     print()
     
     # Analyze images if requested
-    if args.analyze_only:
+    if analyze_only:
         print("🔍 Analyzing images for YOLO processing:")
         print("-" * 60)
         
@@ -212,30 +106,30 @@ def process_single_dataset(segmenter, args):
 
 def main():
     """Main function."""
-    args = parse_arguments()
-    
-    # Handle list options
-    if args.list_models:
-        YOLOModels.print_models_info()
-        return
-    
-    if args.list_presets:
-        print_available_presets()
-        return
+    # Configuration - modify these values as needed
+    model = None  # Use specific model, or None to use preset
+    preset = 'balanced'  # 'fastest', 'balanced', 'accurate', 'high_accuracy', 'maximum_accuracy'
+    conf = None  # Confidence threshold (0.0-1.0), or None to use preset default
+    iou = None  # IoU threshold for NMS (0.0-1.0), or None to use preset default
+    input_folder = 'data/datasets/dataset_1'
+    output_folder = 'data/output/output_yolo'
+    multi_dataset = False  # Set to True to process all datasets
+    analyze_only = False  # Set to True to only analyze images
+    verbose = False  # Set to True for verbose output
     
     print("🎯 YOLO-based Image Segmentation Tool")
     print("=" * 60)
     
     # Determine model and settings
-    model, conf, iou = determine_model_and_settings(args)
+    selected_model, conf_threshold, iou_threshold = determine_model_and_settings(model, preset, conf, iou)
     
-    print(f"🤖 Selected model: {model}")
-    print(f"⚙️  Settings: Confidence={conf}, IoU={iou}")
-    print(f"📁 Input folder: {args.input}")
-    print(f"📂 Output folder: {args.output}")
+    print(f"🤖 Selected model: {selected_model}")
+    print(f"⚙️  Settings: Confidence={conf_threshold}, IoU={iou_threshold}")
+    print(f"📁 Input folder: {input_folder}")
+    print(f"📂 Output folder: {output_folder}")
     
-    if args.verbose:
-        model_info = YOLOModels.get_model_info(model)
+    if verbose:
+        model_info = YOLOModels.get_model_info(selected_model)
         if model_info:
             print(f"📋 Model info: {model_info['name']} - {model_info['description']}")
             print(f"   Parameters: {model_info['params']}, mAP(mask): {model_info['map_mask']}")
@@ -245,23 +139,23 @@ def main():
     # Initialize YOLO segmenter
     try:
         segmenter = YOLOImageSegmenter(
-            model_name=model,
-            input_folder=args.input,
-            output_folder=args.output
+            model_name=selected_model,
+            input_folder=input_folder,
+            output_folder=output_folder
         )
         
         # Set thresholds
-        segmenter.set_thresholds(conf_threshold=conf, iou_threshold=iou)
+        segmenter.set_thresholds(conf_threshold=conf_threshold, iou_threshold=iou_threshold)
         
     except Exception as e:
         print(f"❌ Error initializing YOLO segmenter: {e}")
-        if args.verbose:
+        if verbose:
             import traceback
             traceback.print_exc()
         sys.exit(1)
     
     try:
-        if args.multi_dataset:
+        if multi_dataset:
             print("🔄 Multi-dataset processing mode")
             print("-" * 60)
             results = segmenter.process_multiple_datasets(save_results=True)
@@ -278,13 +172,13 @@ def main():
         else:
             print("📝 Single dataset processing mode")
             print("-" * 60)
-            success = process_single_dataset(segmenter, args)
+            success = process_single_dataset(segmenter, analyze_only)
             if not success:
                 sys.exit(1)
         
         print("\n" + "=" * 60)
         print("🎊 YOLO Segmentation Complete!")
-        model_info = YOLOModels.get_model_info(model)
+        model_info = YOLOModels.get_model_info(selected_model)
         if model_info:
             print(f"Used model: {model_info['name']} - {model_info['description']}")
         print("=" * 60)
@@ -294,7 +188,7 @@ def main():
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Error during processing: {e}")
-        if args.verbose:
+        if verbose:
             import traceback
             traceback.print_exc()
         sys.exit(1)
