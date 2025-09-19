@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from .models import YOLOModels, YOLOModelWrapper
 from .methods import YOLOSegmentationMethods
+from .config import setup_yolo_environment, get_yolo_directories
 
 
 class YOLOImageSegmenter:
@@ -24,6 +25,12 @@ class YOLOImageSegmenter:
         self.input_folder = Path(input_folder)
         self.output_folder = Path(output_folder)
         self.output_folder.mkdir(parents=True, exist_ok=True)
+        
+        # Set up organized YOLO directory structure
+        self.yolo_dirs = setup_yolo_environment()
+        print(f"YOLO organized directories:")
+        for name, path in self.yolo_dirs.items():
+            print(f"  {name.capitalize()}: {path}")
         
         # Initialize YOLO methods
         self.methods = YOLOSegmentationMethods(model_name)
@@ -348,6 +355,9 @@ class YOLOImageSegmenter:
             'conf_threshold': self.conf_threshold,
             'iou_threshold': self.iou_threshold,
             'input_folder': str(self.input_folder),
-            'output_folder': str(self.output_folder)
+            'output_folder': str(self.output_folder),
+            'yolo_directories': {name: str(path) for name, path in self.yolo_dirs.items()},
+            'model_weights_path': str(self.yolo_dirs['weights'] / f"{self.model_name}.pt"),
+            'model_exists_locally': (self.yolo_dirs['weights'] / f"{self.model_name}.pt").exists()
         })
         return info

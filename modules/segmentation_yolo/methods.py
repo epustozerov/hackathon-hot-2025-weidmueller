@@ -12,13 +12,18 @@ from pathlib import Path
 import torch
 
 from .models import YOLOModelWrapper
+from .config import setup_yolo_environment
 
 
 class YOLOSegmentationMethods:
     """YOLO-based segmentation methods."""
     
     def __init__(self, model_name: str = 'yolo11s-seg'):
-        self.model_wrapper = YOLOModelWrapper(model_name)
+        # Set up organized directory structure
+        self.yolo_dirs = setup_yolo_environment()
+        
+        # Initialize model wrapper with organized weights directory
+        self.model_wrapper = YOLOModelWrapper(model_name, str(self.yolo_dirs['weights']))
         self.model_name = model_name
         
     def segment_image(self, image_path: str, conf_threshold: float = 0.25, 

@@ -5,6 +5,8 @@ Configuration settings and utilities for YOLO-based image segmentation.
 """
 
 from typing import Dict, List, Any
+from pathlib import Path
+import os
 
 # YOLO Model Configuration
 YOLO_CONFIG = {
@@ -17,6 +19,39 @@ YOLO_CONFIG = {
     'save_txt': False,
     'verbose': False
 }
+
+# Directory Configuration
+def get_yolo_directories():
+    """Get organized YOLO directory structure."""
+    # Get the project root directory
+    current_file = Path(__file__)
+    project_root = current_file.parent.parent.parent
+    
+    base_dir = project_root / "models" / "segmentation_yolo"
+    
+    directories = {
+        'base': base_dir,
+        'weights': base_dir / "weights",
+        'cache': base_dir / "cache", 
+        'runs': base_dir / "runs",
+        'datasets': base_dir / "datasets",
+        'exports': base_dir / "exports"
+    }
+    
+    # Create directories if they don't exist
+    for dir_path in directories.values():
+        dir_path.mkdir(parents=True, exist_ok=True)
+    
+    return directories
+
+def setup_yolo_environment():
+    """Set up environment variables for YOLO to use organized directories."""
+    dirs = get_yolo_directories()
+    
+    # Set environment variables that ultralytics uses
+    os.environ['YOLO_CONFIG_DIR'] = str(dirs['cache'])
+    
+    return dirs
 
 # Model Selection Presets
 MODEL_PRESETS = {

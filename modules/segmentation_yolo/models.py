@@ -6,6 +6,7 @@ This module contains YOLO model configurations and wrapper classes.
 
 from typing import Dict, List, Optional
 import torch
+import os
 from pathlib import Path
 
 
@@ -134,20 +135,63 @@ class YOLOModels:
 class YOLOModelWrapper:
     """Wrapper class for YOLO models to provide consistent interface."""
     
-    def __init__(self, model_name: str = 'yolo11s-seg'):
+    def __init__(self, model_name: str = 'yolo11s-seg', weights_dir: str = None):
         self.model_name = model_name
         self.model = None
         self.model_info = YOLOModels.get_model_info(model_name)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
+        # Set up organized directory structure
+        if weights_dir is None:
+            # Get the project root directory (3 levels up from this file)
+            current_file = Path(__file__)
+            project_root = current_file.parent.parent.parent
+            weights_dir = project_root / "models" / "segmentation_yolo" / "weights"
+        
+        self.weights_dir = Path(weights_dir)
+        self.weights_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Set up cache and runs directories
+        self.cache_dir = self.weights_dir.parent / "cache"
+        self.runs_dir = self.weights_dir.parent / "runs"
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.runs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Set environment variables for ultralytics to use our directories
+        os.environ['YOLO_CONFIG_DIR'] = str(self.cache_dir)
+        
+        print(f"YOLO directories initialized:")
+        print(f"  Weights: {self.weights_dir}")
+        print(f"  Cache: {self.cache_dir}")
+        print(f"  Runs: {self.runs_dir}")
     
     def load_model(self):
         """Load the YOLO model."""
         try:
             from ultralytics import YOLO
-            print(f"Loading YOLO model: {self.model_name}")
-            self.model = YOLO(f"{self.model_name}.pt")
+            
+            # Check if model exists in our weights directory
+            model_path = self.weights_dir / f"{self.model_name}.pt"
+            
+            if model_path.exists():
+                print(f"Loading YOLO model from: {model_path}")
+                self.model = YOLO(str(model_path))
+            else:
+                print(f"Downloading YOLO model: {self.model_name}")
+                print(f"Will be saved to: {model_path}")
+                
+                # Load model (this will download if not found)
+                self.model = YOLO(f"{self.model_name}.pt")
+                
+                # Move the downloaded model to our weights directory
+                downloaded_path = Path(f"{self.model_name}.pt")
+                if downloaded_path.exists():
+                    downloaded_path.rename(model_path)
+                    print(f"Model saved to: {model_path}")
+            
             print(f"Model loaded successfully on {self.device}")
             return True
+            
         except ImportError:
             print("Error: ultralytics package not installed. Install with: pip install ultralytics")
             return False
@@ -179,5 +223,9 @@ class YOLOModelWrapper:
             'model_name': self.model_name,
             'device': self.device,
             'loaded': self.is_loaded(),
+            'weights_dir': str(self.weights_dir),
+            'cache_dir': str(self.cache_dir),
+            'runs_dir': str(self.runs_dir),
+            'model_exists': (self.weights_dir / f"{self.model_name}.pt").exists(),
             **self.model_info
         }
