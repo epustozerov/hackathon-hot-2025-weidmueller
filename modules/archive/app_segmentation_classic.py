@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 # Import our modular segmentation system
-from modules.segmentation import NeuralImageSegmenter
-from modules.segmentation.config import AVAILABLE_METHODS, DEFAULT_METHOD_SETS
+from modules.segmentation_classic import NeuralImageSegmenter
+from modules.segmentation_classic.config import AVAILABLE_METHODS, DEFAULT_METHOD_SETS
 
 
 def get_selected_methods(methods=None, method_set='balanced'):
