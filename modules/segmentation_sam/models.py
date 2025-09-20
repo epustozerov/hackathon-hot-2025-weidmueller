@@ -310,8 +310,48 @@ class SAMModelWrapper:
             print(f"Config: {config_name}")
             print(f"Checkpoint: {checkpoint_path}")
             
-            # Build SAM model (works for both SAM 2 and SAM 2.1)
-            self.model = build_sam2(config_name, str(checkpoint_path), device=self.device)
+            # For SAM 2.1 models, we need to use the proper Hydra config path
+            try:
+                # Try to build with config name first (works if config is in SAM package)
+                self.model = build_sam2(config_name, str(checkpoint_path), device=self.device)
+            except Exception as e:
+                if "Cannot find primary config" in str(e):
+                    print(f"Config '{config_name}' not found in SAM package search path")
+                    
+                    # For SAM 2.1 models, try using the Hydra config path format
+                    if self.model_info.get('version') == '2.1':
+                        # SAM 2.1 configs are in sam2.1/ subdirectory, use Hydra path format
+                        hydra_config_name = f"sam2.1/{config_name}"
+                        print(f"Trying Hydra config path: {hydra_config_name}")
+                        try:
+                            self.model = build_sam2(hydra_config_name, str(checkpoint_path), device=self.device)
+                            print(f"✅ Successfully loaded with Hydra config path: {hydra_config_name}")
+                        except Exception as e2:
+                            print(f"Hydra config path also failed: {e2}")
+                            
+                            # List available configs to help debug
+                            print("Available configs in SAM package:")
+                            import sam2
+                            sam2_path = Path(sam2.__file__).parent
+                            configs_dir = sam2_path / 'configs'
+                            if configs_dir.exists():
+                                for yaml_file in configs_dir.rglob('*.yaml'):
+                                    rel_path = yaml_file.relative_to(configs_dir)
+                                    print(f"  - {rel_path}")
+                            raise e2
+                    else:
+                        # For SAM 2.0 models, the config should be in the root
+                        print("Available configs in SAM package:")
+                        import sam2
+                        sam2_path = Path(sam2.__file__).parent
+                        configs_dir = sam2_path / 'configs'
+                        if configs_dir.exists():
+                            for yaml_file in configs_dir.rglob('*.yaml'):
+                                rel_path = yaml_file.relative_to(configs_dir)
+                                print(f"  - {rel_path}")
+                        raise e
+                else:
+                    raise e
             
             # Create predictor
             self.predictor = SAM2ImagePredictor(self.model)

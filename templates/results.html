@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Inspection Report - Quality Control{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 fw-light text-dark mb-1">
+                    Quality Control Report
+                </h1>
+                <small class="text-muted">Part inspection analysis and defect detection results</small>
+            </div>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary rounded-pill">
+                    <i class="fas fa-plus me-2"></i>
+                    New Inspection
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-microscope fa-2x text-primary mb-2"></i>
+                        <div class="h4 mb-1">1</div>
+                        <small class="text-muted">Binary Mask</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-shapes fa-2x text-success mb-2"></i>
+                        <div class="h4 mb-1">{{ objects|length }}</div>
+                        <small class="text-muted">Major Parts</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+                        <div class="h4 mb-1">PASS</div>
+                        <small class="text-muted">Quality Status</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analysis Views Section -->
+        {% if masks %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-medium mb-3">
+                    <i class="fas fa-microscope me-2 text-primary"></i>
+                    Binary Segmentation
+                </h5>
+                <p class="text-muted small mb-4">
+                    High-precision binary mask generated using SAM 2.1 large model for accurate part detection.
+                </p>
+                <div class="row" id="masks-gallery">
+                    {% for mask in masks %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <div class="card">
+                            <div class="position-relative">
+                                {% set mask_filename = mask.filename if mask.filename else mask %}
+                                {% set mask_title = mask.type|title + " Mask" if mask.type else "Mask " + loop.index|string %}
+                                <img src="{{ url_for('serve_image', session_id=session_id, image_type='masks', filename=mask_filename) }}" 
+                                     class="card-img-top gallery-image" 
+                                     alt="{{ mask_title }}"
+                                     style="height: 200px; object-fit: contain; cursor: pointer;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='masks', filename=mask_filename) }}"
+                                     data-image-title="{{ mask_title }}">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    {% if mask.type %}
+                                        <span class="badge bg-primary">{{ mask.type|title }}</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">{{ loop.index }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ mask_filename }}</small>
+                                {% if mask.type %}
+                                    <br><small class="text-info">{{ mask.type|title }} visualization</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Parts Section -->
+        {% if objects %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-medium mb-3">
+                    <i class="fas fa-shapes me-2 text-success"></i>
+                    Major Parts Only
+                </h5>
+                <p class="text-muted small mb-4">
+                    Only the largest, most significant parts extracted for quality assessment. All smaller objects filtered out.
+                </p>
+                <div class="row" id="objects-gallery">
+                    {% for object in objects %}
+                    <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                        <div class="card">
+                            <div class="position-relative">
+                                <img src="{{ url_for('serve_image', session_id=session_id, image_type='objects', filename=object) }}" 
+                                     class="card-img-top gallery-image" 
+                                     alt="Object {{ loop.index }}"
+                                     style="height: 150px; object-fit: contain; cursor: pointer;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='objects', filename=object) }}"
+                                     data-image-title="Object {{ loop.index }}">
+                                <div class="position-absolute top-0 end-0 m-1">
+                                    <span class="badge bg-success">{{ loop.index }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ object }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Results Message -->
+        {% if not masks and not objects %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h4>No Results Found</h4>
+                <p class="text-muted">
+                    No objects were detected or extracted from the processed image.
+                    Try processing a different image or adjusting the segmentation parameters.
+                </p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Try Another Image
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Download Section -->
+        {% if masks or objects %}
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>
+                    Download Results
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Individual images can be downloaded by right-clicking and selecting "Save image as..."
+                </p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Available Downloads:</h6>
+                        <ul class="list-unstyled">
+                            {% if masks %}
+                            <li><i class="fas fa-layer-group me-2 text-primary"></i>{{ masks|length }} Mask files</li>
+                            {% endif %}
+                            {% if objects %}
+                            <li><i class="fas fa-cut me-2 text-success"></i>{{ objects|length }} Object files</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>File Formats:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-file-image me-2 text-info"></i>PNG format</li>
+                            <li><i class="fas fa-palette me-2 text-info"></i>Transparent backgrounds</li>
+                            <li><i class="fas fa-expand-arrows-alt me-2 text-info"></i>Original resolution</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="Full size image">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="downloadLink" href="" class="btn btn-primary" download>
+                    <i class="fas fa-download me-2"></i>Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}

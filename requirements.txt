@@ -7,5 +7,7 @@ matplotlib
 scikit-learn
 Pillow
 tqdm
+flask>=2.3.0
+werkzeug>=2.3.0
 # SAM 2 dependencies (install via git+https://github.com/facebookresearch/segment-anything-2.git)
 # segment-anything-2

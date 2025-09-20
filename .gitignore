@@ -34,6 +34,8 @@ env/
 
 # Data and outputs
 data
+web_results
+web_uploads
 
 # Model files and cache
 models

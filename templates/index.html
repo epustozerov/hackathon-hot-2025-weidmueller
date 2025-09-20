@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Quality Control - Defect Detection{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <h1 class="h2 fw-light text-dark mb-3">
+                Part Inspection & Defect Detection
+            </h1>
+            <p class="text-muted mb-0">
+                Upload part images for automated quality control analysis
+            </p>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card border-0 shadow-sm mb-4" id="status-card">
+            <div class="card-body text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status" id="status-spinner">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span id="status-text" class="text-muted">Initializing quality control system...</span>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="card border-0 shadow-sm" id="upload-card" style="display: none;">
+            <div class="card-body p-4">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <!-- File Input -->
+                    <div class="mb-4">
+                        <label for="file-input" class="form-label fw-medium">Part Image</label>
+                        <input type="file" class="form-control form-control-lg border-0 bg-light" id="file-input" name="file" 
+                               accept=".png,.jpg,.jpeg,.gif,.bmp,.tiff" required>
+                        <div class="form-text">
+                            Upload high-resolution part images • Max: 50MB
+                        </div>
+                    </div>
+
+                    <!-- Image Preview -->
+                    <div class="mb-4" id="image-preview-container" style="display: none;">
+                        <label class="form-label fw-medium">Preview</label>
+                        <div class="text-center bg-light rounded p-3">
+                            <img id="image-preview" class="img-fluid rounded shadow-sm" style="max-height: 300px;">
+                        </div>
+                    </div>
+
+                    <!-- Point Selection -->
+                    <div class="mb-4" id="point-selection" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-medium mb-0">Focus Areas (Optional)</label>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-points">
+                                <i class="fas fa-times me-1"></i>Clear
+                            </button>
+                        </div>
+                        <div class="alert alert-light border-0">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Click on areas of interest for targeted inspection
+                            </small>
+                        </div>
+                        <div id="selected-points" class="mt-2"></div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill" id="process-btn">
+                            <i class="fas fa-search me-2"></i>
+                            Start Inspection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Processing Progress -->
+        <div class="card border-0 shadow-sm mt-4" id="processing-card" style="display: none;">
+            <div class="card-body p-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-cog fa-spin fa-2x text-primary"></i>
+                </div>
+                <h6 class="fw-medium mb-3">Analyzing Part...</h6>
+                <div class="progress mb-3" style="height: 6px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 0%" id="progress-bar"></div>
+                </div>
+                <small class="text-muted" id="processing-status">Initializing inspection...</small>
+            </div>
+        </div>
+
+        <!-- Results Preview -->
+        <div class="card border-0 shadow-sm mt-4" id="results-preview" style="display: none;">
+            <div class="card-body p-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                </div>
+                <h6 class="fw-medium mb-4">Inspection Complete</h6>
+                <div class="row g-4 mb-4">
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3">
+                            <div class="h5 text-primary mb-1" id="mask-count">0</div>
+                            <small class="text-muted">Analysis Views</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3">
+                            <div class="h5 text-success mb-1" id="object-count">0</div>
+                            <small class="text-muted">Parts Detected</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-primary btn-lg rounded-pill" id="view-results-btn">
+                        <i class="fas fa-chart-line me-2"></i>
+                        View Inspection Report
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary" onclick="location.reload()">
+                        <i class="fas fa-plus me-2"></i>
+                        Inspect Another Part
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Display -->
+        <div class="alert alert-danger border-0 mt-4" id="error-alert" style="display: none;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <div>
+                    <small class="fw-medium">Inspection Failed</small>
+                    <div class="small" id="error-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}
