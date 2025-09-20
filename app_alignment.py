@@ -294,6 +294,10 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
     # Create output directory
     output_path.mkdir(parents=True, exist_ok=True)
     
+    # Create masks output directory
+    masks_output_path = output_path / "masks"
+    masks_output_path.mkdir(parents=True, exist_ok=True)
+    
     # Find original image
     original_image_path = original_folder / f"{image_name}.jpg"
     if not original_image_path.exists():
@@ -371,11 +375,14 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
             object_img[object_mask_cropped == 0] = [0, 0, 0]
             
             # Apply rotation if requested - use the mask to determine the object's diagonal
+            rotated_mask = object_mask_cropped.copy()
             if rotate_image:
                 # Calculate rotation angle based on the object's mask
                 rotation_angle = calculate_object_rotation_angle(object_mask_cropped)
                 if rotation_angle != 0:
                     object_img = rotate_object_by_angle(object_img, rotation_angle)
+                    # Also rotate the mask to keep it synchronized
+                    rotated_mask = rotate_object_by_angle(rotated_mask, rotation_angle)
             
             # Save cut object
             output_filename = f"{image_name}_object_{i:02d}.png"
@@ -383,6 +390,13 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
             
             cv2.imwrite(str(output_file_path), object_img)
             print(f"   💾 Saved: {output_filename}")
+            
+            # Save corresponding mask
+            mask_filename = f"{image_name}_object_{i:02d}_mask.png"
+            mask_file_path = masks_output_path / mask_filename
+            cv2.imwrite(str(mask_file_path), rotated_mask)
+            print(f"   🎭 Saved mask: {mask_filename}")
+            
             objects_cut += 1
         
         print(f"✅ Successfully cut {objects_cut} objects from {image_name}")
@@ -413,6 +427,10 @@ def process_folder(original_folder: Path, masks_folder: Path, output_path: Path,
     
     # Create output directory
     output_path.mkdir(parents=True, exist_ok=True)
+    
+    # Create masks output directory
+    masks_output_path = output_path / "masks"
+    masks_output_path.mkdir(parents=True, exist_ok=True)
     
     # Find all original images
     original_images = list(original_folder.glob('*.jpg')) + list(original_folder.glob('*.jpeg'))
@@ -500,11 +518,14 @@ def process_folder(original_folder: Path, masks_folder: Path, output_path: Path,
                 object_img[object_mask_cropped == 0] = [0, 0, 0]
                 
                 # Apply rotation if requested - use the mask to determine the object's diagonal
+                rotated_mask = object_mask_cropped.copy()
                 if rotate_image:
                     # Calculate rotation angle based on the object's mask
                     rotation_angle = calculate_object_rotation_angle(object_mask_cropped)
                     if rotation_angle != 0:
                         object_img = rotate_object_by_angle(object_img, rotation_angle)
+                        # Also rotate the mask to keep it synchronized
+                        rotated_mask = rotate_object_by_angle(rotated_mask, rotation_angle)
                 
                 # Save cut object
                 output_filename = f"{image_name}_object_{i:02d}.png"
@@ -512,6 +533,13 @@ def process_folder(original_folder: Path, masks_folder: Path, output_path: Path,
                 
                 cv2.imwrite(str(output_file_path), object_img)
                 print(f"   💾 Saved: {output_filename}")
+                
+                # Save corresponding mask
+                mask_filename = f"{image_name}_object_{i:02d}_mask.png"
+                mask_file_path = masks_output_path / mask_filename
+                cv2.imwrite(str(mask_file_path), rotated_mask)
+                print(f"   🎭 Saved mask: {mask_filename}")
+                
                 objects_cut += 1
             
             print(f"✅ Cut {objects_cut} objects from {image_name}")
