@@ -34,27 +34,36 @@ from modules.comparison.comparison import (
     compare_images
 )
 
+# Import sophisticated alignment from app_matching
+from app_matching import ImageMatcher
+
 
 class ObjectClassifier:
-    """Class for neural network-based object classification and similarity evaluation."""
+    """Class for neural network-based object classification and similarity evaluation with sophisticated alignment."""
     
-    def __init__(self, output_dir: str = "data/output/classification_results"):
+    def __init__(self, output_dir: str = "data/output/classification_results", masks_dir: Path = None):
         """
         Initialize the ObjectClassifier class.
         
         Args:
             output_dir: Directory to save classification results
+            masks_dir: Directory containing object masks for better alignment
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.masks_dir = masks_dir
         
         # Create subdirectories for different outputs
         self.edges_dir = self.output_dir / "edges"
         self.similarity_dir = self.output_dir / "similarity"
         self.results_dir = self.output_dir / "results"
+        self.aligned_dir = self.output_dir / "aligned_comparisons"
         
-        for dir_path in [self.edges_dir, self.similarity_dir, self.results_dir]:
+        for dir_path in [self.edges_dir, self.similarity_dir, self.results_dir, self.aligned_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize sophisticated alignment matcher
+        self.matcher = ImageMatcher(str(self.output_dir / "alignment_temp"))
     
     def detect_object_edges(self, image: np.ndarray, method: str = "canny") -> np.ndarray:
         """
@@ -243,9 +252,142 @@ class ObjectClassifier:
         
         return iou
     
+    def _sophisticated_alignment(self, template_img: np.ndarray, object_img: np.ndarray,
+                                template_path: Path, object_path: Path) -> Tuple[np.ndarray, np.ndarray, Dict]:
+        """
+        Perform sophisticated alignment between template and object using systematic rotation optimization.
+        
+        Args:
+            template_img: Template image
+            object_img: Object image to align with template
+            template_path: Path to template image (for mask loading)
+            object_path: Path to object image (for mask loading)
+            
+        Returns:
+            Tuple of (aligned_template, aligned_object, alignment_info)
+        """
+        print("   🎯 Performing sophisticated alignment...")
+        
+        # Convert images to binary/load masks for alignment
+        template_binary = None
+        object_binary = None
+        
+        if self.masks_dir and self.masks_dir.exists():
+            # Try to load corresponding masks
+            template_mask_path = self.masks_dir / f"{template_path.stem}_mask.png"
+            object_mask_path = self.masks_dir / f"{object_path.stem}_mask.png"
+            
+            if template_mask_path.exists():
+                template_binary = cv2.imread(str(template_mask_path), cv2.IMREAD_GRAYSCALE)
+                print(f"   🎭 Loaded template mask: {template_mask_path.name}")
+            else:
+                template_binary = self.matcher.create_binary_image(template_img, "adaptive")
+                print(f"   🔄 Created binary template from image")
+            
+            if object_mask_path.exists():
+                object_binary = cv2.imread(str(object_mask_path), cv2.IMREAD_GRAYSCALE)
+                print(f"   🎭 Loaded object mask: {object_mask_path.name}")
+            else:
+                object_binary = self.matcher.create_binary_image(object_img, "adaptive")
+                print(f"   🔄 Created binary object from image")
+        else:
+            # Fallback to binary conversion
+            template_binary = self.matcher.create_binary_image(template_img, "adaptive")
+            object_binary = self.matcher.create_binary_image(object_img, "adaptive")
+            print("   🔄 Using binary conversion for alignment")
+        
+        # Perform sophisticated rotation and scale optimization
+        best_position, overlap_score, transformed_object_binary = self.matcher.find_optimal_overlap(
+            template_binary, object_binary, "contour_matching"
+        )
+        
+        # Apply the same transformation to the original color image
+        # Extract transformation parameters from the optimization
+        transformed_object_img = self._apply_optimal_transformation(object_img, object_binary, transformed_object_binary)
+        
+        alignment_info = {
+            'overlap_score': float(overlap_score),
+            'best_position': best_position,
+            'transformation_applied': True
+        }
+        
+        print(f"   ✅ Alignment complete: Overlap={overlap_score:.3f}, Position={best_position}")
+        
+        return template_img, transformed_object_img, alignment_info
+    
+    def _apply_optimal_transformation(self, original_img: np.ndarray, original_binary: np.ndarray, 
+                                    transformed_binary: np.ndarray) -> np.ndarray:
+        """
+        Apply the same transformation that was applied to binary image to the original color image.
+        
+        Args:
+            original_img: Original color image
+            original_binary: Original binary image
+            transformed_binary: Transformed binary image
+            
+        Returns:
+            Transformed color image
+        """
+        # For now, we'll use a simplified approach by detecting the transformation
+        # In a more sophisticated implementation, we would store the transformation matrix
+        
+        # Find contours to detect transformation
+        orig_contours, _ = cv2.findContours(original_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        trans_contours, _ = cv2.findContours(transformed_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if not orig_contours or not trans_contours:
+            return original_img
+        
+        # Get the largest contours
+        orig_contour = max(orig_contours, key=cv2.contourArea)
+        trans_contour = max(trans_contours, key=cv2.contourArea)
+        
+        # Calculate transformation matrix using contour matching
+        try:
+            # Get minimum area rectangles
+            orig_rect = cv2.minAreaRect(orig_contour)
+            trans_rect = cv2.minAreaRect(trans_contour)
+            
+            # Extract rotation and scale
+            orig_angle = orig_rect[2]
+            trans_angle = trans_rect[2]
+            
+            rotation_angle = trans_angle - orig_angle
+            
+            orig_size = max(orig_rect[1])
+            trans_size = max(trans_rect[1])
+            scale = trans_size / orig_size if orig_size > 0 else 1.0
+            
+            # Apply transformation to original image
+            h, w = original_img.shape[:2]
+            center = (w // 2, h // 2)
+            
+            M = cv2.getRotationMatrix2D(center, rotation_angle, scale)
+            
+            # Calculate new dimensions
+            cos_angle = abs(M[0, 0])
+            sin_angle = abs(M[0, 1])
+            new_w = int((h * sin_angle) + (w * cos_angle))
+            new_h = int((h * cos_angle) + (w * sin_angle))
+            
+            # Adjust translation
+            M[0, 2] += (new_w / 2) - center[0]
+            M[1, 2] += (new_h / 2) - center[1]
+            
+            # Apply transformation
+            transformed_img = cv2.warpAffine(original_img, M, (new_w, new_h), 
+                                           borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            
+            return transformed_img
+            
+        except Exception as e:
+            print(f"   ⚠️  Transformation application failed: {e}, returning original")
+            return original_img
+    
     def compare_with_templates(self, object_path: Path, template_dir: Path) -> Dict[str, Dict]:
         """
         Compare an object with all templates in the template directory.
+        Applies rotation alignment before comparison.
         
         Args:
             object_path: Path to the object image
@@ -261,6 +403,8 @@ class ObjectClassifier:
         if object_img is None:
             print(f"❌ Could not load object image: {object_path}")
             return {}
+        
+        # Note: We'll apply sophisticated alignment for each template comparison
         
         # Find template images
         template_extensions = ['*.png', '*.jpg', '*.jpeg', '*.bmp']
@@ -286,27 +430,115 @@ class ObjectClassifier:
                 print(f"   ❌ Could not load template: {template_path}")
                 continue
             
-            # Calculate similarity metrics
-            metrics = self.calculate_similarity_metrics(object_img, template_img)
+            # Apply sophisticated alignment between template and object
+            template_img_aligned, object_img_aligned, alignment_info = self._sophisticated_alignment(
+                template_img, object_img, template_path, object_path
+            )
             
-            # Save edge images for visualization
-            object_edges = self.detect_object_edges(object_img, "neural")
-            template_edges = self.detect_object_edges(template_img, "neural")
+            # Calculate similarity metrics using aligned images
+            metrics = self.calculate_similarity_metrics(object_img_aligned, template_img_aligned)
+            
+            # Save edge images for visualization (using aligned images)
+            object_edges = self.detect_object_edges(object_img_aligned, "neural")
+            template_edges = self.detect_object_edges(template_img_aligned, "neural")
             
             edge_output_path = self.edges_dir / f"{object_path.stem}_vs_{template_path.stem}_edges.png"
             self._save_edge_comparison(object_edges, template_edges, edge_output_path)
             
-            # Store results
+            # Save back-to-back aligned comparison image
+            aligned_comparison_path = self.similarity_dir / f"{object_path.stem}_vs_{template_path.stem}_aligned.png"
+            self._save_aligned_comparison(object_img_aligned, template_img_aligned, aligned_comparison_path)
+            
+            # Extract keypoints from aligned images for point-based comparison
+            object_binary = self.matcher.create_binary_image(object_img_aligned, "adaptive")
+            template_binary = self.matcher.create_binary_image(template_img_aligned, "adaptive")
+            
+            object_points = self.matcher._extract_object_keypoints(object_binary)
+            template_points = self.matcher._extract_object_keypoints(template_binary)
+            
+            # Calculate point-based similarity
+            point_similarity = self._calculate_point_similarity(object_points, template_points)
+            
+            # Store results with alignment and point information
             comparison_results[template_path.name] = {
                 'metrics': metrics,
+                'alignment_info': alignment_info,
+                'point_similarity': point_similarity,
+                'keypoints_count': {'object': len(object_points), 'template': len(template_points)},
                 'edge_image': str(edge_output_path),
+                'aligned_comparison': str(aligned_comparison_path),
                 'object_path': str(object_path),
-                'template_path': str(template_path)
+                'template_path': str(template_path),
+                'object_aligned_path': str(self.aligned_dir / f"{object_path.stem}_aligned.png"),
+                'template_aligned_path': str(self.aligned_dir / f"{template_path.stem}_aligned.png")
             }
             
+            # Save individual aligned images
+            cv2.imwrite(str(self.aligned_dir / f"{object_path.stem}_aligned.png"), object_img_aligned)
+            cv2.imwrite(str(self.aligned_dir / f"{template_path.stem}_aligned.png"), template_img_aligned)
+            
             print(f"   ✅ SSIM: {metrics['ssim']:.3f}, PSNR: {metrics['psnr']:.1f}, Edge: {metrics['edge_similarity']:.3f}")
+            print(f"   🎯 Alignment: Overlap={alignment_info['overlap_score']:.3f}, Points: {point_similarity:.3f}")
         
         return comparison_results
+    
+    def _calculate_point_similarity(self, points1: np.ndarray, points2: np.ndarray) -> float:
+        """
+        Calculate similarity between two sets of keypoints.
+        
+        Args:
+            points1: First set of keypoints
+            points2: Second set of keypoints
+            
+        Returns:
+            Point similarity score (0.0 to 1.0)
+        """
+        if len(points1) == 0 or len(points2) == 0:
+            return 0.0
+        
+        # Method 1: Hausdorff distance-based similarity
+        try:
+            # Calculate distances from each point in set 1 to closest point in set 2
+            distances_1_to_2 = []
+            for p1 in points1:
+                distances = np.linalg.norm(points2 - p1, axis=1)
+                distances_1_to_2.append(np.min(distances))
+            
+            # Calculate distances from each point in set 2 to closest point in set 1
+            distances_2_to_1 = []
+            for p2 in points2:
+                distances = np.linalg.norm(points1 - p2, axis=1)
+                distances_2_to_1.append(np.min(distances))
+            
+            # Hausdorff distance
+            hausdorff_dist = max(np.max(distances_1_to_2), np.max(distances_2_to_1))
+            
+            # Convert to similarity (lower distance = higher similarity)
+            hausdorff_similarity = 1.0 / (1.0 + hausdorff_dist / 100.0)
+            
+        except Exception:
+            hausdorff_similarity = 0.0
+        
+        # Method 2: Average closest point distance
+        try:
+            avg_dist_1_to_2 = np.mean(distances_1_to_2)
+            avg_dist_2_to_1 = np.mean(distances_2_to_1)
+            avg_distance = (avg_dist_1_to_2 + avg_dist_2_to_1) / 2.0
+            
+            avg_distance_similarity = 1.0 / (1.0 + avg_distance / 50.0)
+            
+        except Exception:
+            avg_distance_similarity = 0.0
+        
+        # Method 3: Point count similarity
+        count_similarity = min(len(points1), len(points2)) / max(len(points1), len(points2))
+        
+        # Combine metrics
+        final_similarity = (0.4 * hausdorff_similarity + 
+                           0.4 * avg_distance_similarity + 
+                           0.2 * count_similarity)
+        
+        return final_similarity
     
     def _save_edge_comparison(self, edges1: np.ndarray, edges2: np.ndarray, output_path: Path):
         """
@@ -331,6 +563,49 @@ class ObjectClassifier:
         # Add labels
         cv2.putText(comparison, "Object Edges", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(comparison, "Template Edges", (edges1.shape[1] + 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        cv2.imwrite(str(output_path), comparison)
+    
+    def _save_aligned_comparison(self, img1: np.ndarray, img2: np.ndarray, output_path: Path):
+        """
+        Save back-to-back aligned comparison image.
+        
+        Args:
+            img1: First aligned image
+            img2: Second aligned image
+            output_path: Path to save the comparison image
+        """
+        # Ensure images are the same height for side-by-side comparison
+        h1, w1 = img1.shape[:2]
+        h2, w2 = img2.shape[:2]
+        
+        # Use the maximum height
+        max_height = max(h1, h2)
+        
+        # Resize images to same height
+        if h1 != max_height:
+            scale1 = max_height / h1
+            new_w1 = int(w1 * scale1)
+            img1_resized = cv2.resize(img1, (new_w1, max_height))
+        else:
+            img1_resized = img1
+            
+        if h2 != max_height:
+            scale2 = max_height / h2
+            new_w2 = int(w2 * scale2)
+            img2_resized = cv2.resize(img2, (new_w2, max_height))
+        else:
+            img2_resized = img2
+        
+        # Create side-by-side comparison
+        comparison = np.hstack([img1_resized, img2_resized])
+        
+        # Add labels
+        cv2.putText(comparison, "Object (Aligned)", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(comparison, "Template (Aligned)", (img1_resized.shape[1] + 10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        # Add separator line
+        cv2.line(comparison, (img1_resized.shape[1], 0), (img1_resized.shape[1], max_height), (255, 255, 255), 2)
         
         cv2.imwrite(str(output_path), comparison)
     
@@ -404,7 +679,13 @@ class ObjectClassifier:
             for template_name, template_data in obj_results.items():
                 clean_results[obj_name][template_name] = {
                     'metrics': {k: convert_numpy(v) for k, v in template_data['metrics'].items()},
+                    'alignment_info': {k: convert_numpy(v) for k, v in template_data['alignment_info'].items()},
+                    'point_similarity': convert_numpy(template_data['point_similarity']),
+                    'keypoints_count': {k: convert_numpy(v) for k, v in template_data['keypoints_count'].items()},
                     'edge_image': template_data['edge_image'],
+                    'aligned_comparison': template_data['aligned_comparison'],
+                    'object_aligned_path': template_data['object_aligned_path'],
+                    'template_aligned_path': template_data['template_aligned_path'],
                     'object_path': template_data['object_path'],
                     'template_path': template_data['template_path']
                 }
@@ -467,14 +748,16 @@ class ObjectClassifier:
 def main():
     """Main function with hardcoded parameters."""
     # Configuration parameters - modify these as needed
-    objects_dir = Path('data/output/cut_objects')  # Directory containing cut objects
+    objects_dir = Path('data/datasets/cut_objects')  # Directory containing cut objects
     templates_dir = Path('data/datasets/templates')  # Directory containing template images
+    masks_dir = Path('data/datasets/cut_objects/masks')  # Directory containing object masks
     output_dir = Path('data/output/classification_results')  # Output directory for results
     
     print("🧠 Object Classification and Similarity Evaluation Application")
     print("=" * 70)
     print(f"📁 Objects directory: {objects_dir}")
     print(f"📁 Templates directory: {templates_dir}")
+    print(f"🎭 Masks directory: {masks_dir}")
     print(f"📂 Output directory: {output_dir}")
     print()
     
@@ -490,8 +773,8 @@ def main():
         sys.exit(1)
     
     try:
-        # Initialize classifier
-        classifier = ObjectClassifier(str(output_dir))
+        # Initialize classifier with masks directory
+        classifier = ObjectClassifier(str(output_dir), masks_dir)
         
         # Process objects and compare with templates
         results = classifier.process_objects_directory(objects_dir, templates_dir)
