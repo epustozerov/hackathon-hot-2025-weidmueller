@@ -3,16 +3,15 @@
 SAM 2-based Image Segmentation Tool
 
 Main application entry point for SAM 2-based image segmentation using Meta's 
-Segment Anything Model 2.
+Segment Anything Model 2, now with support for both SAM 2 and SAM 2.1 models.
 """
 
 import sys
-from pathlib import Path
 from typing import List, Tuple
 
 # Import SAM 2 segmentation system
 from modules.segmentation_sam import SAMImageSegmenter
-from modules.segmentation_sam.config import MODEL_PRESETS, get_preset_config, print_available_presets, print_prompt_types, get_model_download_info
+from modules.segmentation_sam.config import get_preset_config
 from modules.segmentation_sam.models import SAMModels
 
 
@@ -41,7 +40,7 @@ def parse_box(box_str: str) -> Tuple[int, int, int, int]:
     """Parse box coordinates from arguments."""
     try:
         x1, y1, x2, y2 = map(int, box_str.split(','))
-        return (x1, y1, x2, y2)
+        return x1, y1, x2, y2
     except ValueError:
         print(f"⚠️  Invalid box format: {box_str}. Expected: x1,y1,x2,y2")
         return None
@@ -71,7 +70,7 @@ def process_single_dataset(segmenter, prompt_type='points', points=None, box=Non
     
     # Analyze images if requested
     if analyze_only:
-        print("🔍 Analyzing images for SAM 2 processing:")
+        print("🔍 Analyzing images for SAM processing:")
         print("-" * 60)
         
         for image_path in image_files:
@@ -92,7 +91,7 @@ def process_single_dataset(segmenter, prompt_type='points', points=None, box=Non
         return True
     
     # Process images based on prompt type
-    print(f"🚀 Processing images with SAM 2 segmentation:")
+    print(f"🚀 Processing images with SAM segmentation:")
     print(f"   Prompt type: {prompt_type}")
     print("-" * 60)
     
@@ -174,7 +173,7 @@ def main():
     """Main function."""
     # Configuration - modify these values as needed
     model = None  # Use specific model, or None to use preset
-    preset = 'high_quality'  # 'fastest', 'balanced', 'high_quality', 'maximum_accuracy'
+    preset = 'balanced'  # 'fastest', 'balanced', 'high_quality', 'maximum_accuracy'
     prompt_type = 'points'  # 'points', 'box', 'everything'
     points = None  # List of point coordinates as strings, e.g., ['400,300', '500,400']
     box = None  # Box coordinates as string, e.g., '100,100,300,200'
@@ -200,11 +199,12 @@ def main():
         model_info = SAMModels.get_model_info(selected_model)
         if model_info:
             print(f"📋 Model info: {model_info['name']} - {model_info['description']}")
+            print(f"   Version: {model_info.get('version', '2.0')}")
             print(f"   Size: {model_info['size']}, Speed: {model_info['speed']}")
     
     print()
     
-    # Initialize SAM 2 segmenter
+    # Initialize SAM segmenter
     try:
         segmenter = SAMImageSegmenter(
             model_name=selected_model,
@@ -213,7 +213,7 @@ def main():
         )
         
     except Exception as e:
-        print(f"❌ Error initializing SAM 2 segmenter: {e}")
+        print(f"❌ Error initializing SAM segmenter: {e}")
         print("\n💡 Make sure you have:")
         print("   1. Installed SAM 2: pip install git+https://github.com/facebookresearch/segment-anything-2.git")
         print("   2. Downloaded model checkpoints to models/segmentation_sam/weights/")
@@ -249,10 +249,11 @@ def main():
                 sys.exit(1)
         
         print("\n" + "=" * 60)
-        print("🎊 SAM 2 Segmentation Complete!")
+        print("🎊 SAM Segmentation Complete!")
         model_info = SAMModels.get_model_info(selected_model)
         if model_info:
             print(f"Used model: {model_info['name']} - {model_info['description']}")
+            print(f"Version: {model_info.get('version', '2.0')}")
         print("📚 Learn more: https://ai.meta.com/sam2/")
         print("=" * 60)
         
