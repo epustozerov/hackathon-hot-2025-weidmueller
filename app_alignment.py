@@ -22,12 +22,167 @@ Configuration:
 import sys
 from pathlib import Path
 from typing import List, Dict
+import numpy as np
 
 # Import alignment methods
 from modules.alignment.methods import ObjectAlignment, align_image, align_images
 
 
-def process_single_image(input_path: Path, output_dir: Path, image_type: str = "auto", original_path: Path = None) -> bool:
+def calculate_rotation_angle(image_shape: tuple) -> float:
+    """
+    Calculate the rotation angle to orient the largest diagonal horizontally.
+    
+    Args:
+        image_shape: Tuple of (height, width) of the image
+        
+    Returns:
+        Rotation angle in degrees
+    """
+    height, width = image_shape[:2]
+    
+    # Calculate the angle of the diagonal from bottom-left to top-right
+    # This diagonal goes from (0, height) to (width, 0)
+    diagonal_angle = np.degrees(np.arctan2(height, width))
+    
+    # To make the diagonal horizontal, we need to rotate by -diagonal_angle
+    # This will make the diagonal parallel to the x-axis
+    rotation_angle = -diagonal_angle
+    
+    return rotation_angle
+
+
+def calculate_object_rotation_angle(mask: np.ndarray) -> float:
+    """
+    Calculate the rotation angle to orient the object's largest diagonal horizontally.
+    Uses the mask to find the actual object boundaries and calculate the diagonal.
+    
+    Args:
+        mask: Binary mask of the object
+        
+    Returns:
+        Rotation angle in degrees
+    """
+    import cv2
+    
+    if mask is None or mask.size == 0:
+        return 0.0
+    
+    # Find contours in the mask to get the object's actual shape
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        return 0.0
+    
+    # Get the largest contour (the main object)
+    largest_contour = max(contours, key=cv2.contourArea)
+    
+    # Get the minimum area rectangle (rotated rectangle) of the object
+    rect = cv2.minAreaRect(largest_contour)
+    width, height = rect[1]
+    angle = rect[2]
+    
+    # OpenCV returns angles in [-90, 0] range
+    # We want to make the longest side horizontal
+    if width < height:  # If the rectangle is taller than wide
+        angle += 90
+    
+    # Normalize angle to [-45, 45] range for minimal rotation
+    if angle > 45:
+        angle -= 90
+    elif angle < -45:
+        angle += 90
+    
+    return angle
+
+
+def rotate_object_by_angle(image: np.ndarray, angle: float) -> np.ndarray:
+    """
+    Rotate an object by a specific angle.
+    
+    Args:
+        image: Input image as numpy array
+        angle: Rotation angle in degrees
+        
+    Returns:
+        Rotated image
+    """
+    import cv2
+    
+    if image is None or image.size == 0 or abs(angle) < 0.1:
+        return image
+    
+    height, width = image.shape[:2]
+    center = (width // 2, height // 2)
+    
+    # Create rotation matrix
+    rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+    
+    # Calculate new image dimensions to avoid cropping
+    cos_angle = abs(rotation_matrix[0, 0])
+    sin_angle = abs(rotation_matrix[0, 1])
+    new_width = int((height * sin_angle) + (width * cos_angle))
+    new_height = int((height * cos_angle) + (width * sin_angle))
+    
+    # Adjust rotation matrix for new center
+    rotation_matrix[0, 2] += (new_width / 2) - center[0]
+    rotation_matrix[1, 2] += (new_height / 2) - center[1]
+    
+    # Apply rotation
+    rotated_image = cv2.warpAffine(image, rotation_matrix, (new_width, new_height), 
+                                  borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    
+    return rotated_image
+
+
+def rotate_image_to_horizontal_diagonal(image: np.ndarray) -> np.ndarray:
+    """
+    Rotate an image so that its largest diagonal is horizontally oriented.
+    
+    Args:
+        image: Input image as numpy array
+        
+    Returns:
+        Rotated image
+    """
+    import cv2
+    
+    if image is None or image.size == 0:
+        return image
+    
+    height, width = image.shape[:2]
+    
+    # Calculate the angle needed to make the diagonal horizontal
+    # The diagonal goes from (0, height) to (width, 0)
+    # We want this diagonal to be horizontal (parallel to x-axis)
+    diagonal_angle = np.degrees(np.arctan2(height, width))
+    
+    # To make the diagonal horizontal, rotate by -diagonal_angle
+    rotation_angle = -diagonal_angle
+    
+    # Get image center
+    center = (width // 2, height // 2)
+    
+    # Create rotation matrix
+    rotation_matrix = cv2.getRotationMatrix2D(center, rotation_angle, 1.0)
+    
+    # Calculate new image dimensions to avoid cropping
+    cos_angle = abs(rotation_matrix[0, 0])
+    sin_angle = abs(rotation_matrix[0, 1])
+    new_width = int((height * sin_angle) + (width * cos_angle))
+    new_height = int((height * cos_angle) + (width * sin_angle))
+    
+    # Adjust rotation matrix for new center
+    rotation_matrix[0, 2] += (new_width / 2) - center[0]
+    rotation_matrix[1, 2] += (new_height / 2) - center[1]
+    
+    # Apply rotation
+    rotated_image = cv2.warpAffine(image, rotation_matrix, (new_width, new_height), 
+                                  borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    
+    return rotated_image
+
+
+def process_single_image(input_path: Path, output_dir: Path, image_type: str = "auto", original_path: Path = None, rotate_image: bool = False) -> bool:
     """
     Process a single segmented image to extract objects.
     
@@ -36,6 +191,7 @@ def process_single_image(input_path: Path, output_dir: Path, image_type: str = "
         output_dir: Directory to save aligned objects
         image_type: Type of image ("binary", "colored", or "auto")
         original_path: Path to the original image (for binary masks)
+        rotate_image: Whether to rotate images so largest diagonal is horizontal
         
     Returns:
         True if successful, False otherwise
@@ -49,7 +205,7 @@ def process_single_image(input_path: Path, output_dir: Path, image_type: str = "
     
     try:
         # Initialize alignment processor
-        aligner = ObjectAlignment(str(output_dir))
+        aligner = ObjectAlignment(str(output_dir), rotate_image)
         
         # For binary masks, try to find corresponding original image
         if original_path is None and 'binary' in input_path.name.lower():
@@ -76,7 +232,7 @@ def process_single_image(input_path: Path, output_dir: Path, image_type: str = "
         return False
 
 
-def process_directory(input_dir: Path, output_dir: Path, image_type: str = "auto") -> bool:
+def process_directory(input_dir: Path, output_dir: Path, image_type: str = "auto", rotate_image: bool = False) -> bool:
     """
     Process all segmented images in a directory.
     
@@ -84,6 +240,7 @@ def process_directory(input_dir: Path, output_dir: Path, image_type: str = "auto
         input_dir: Directory containing segmented images
         output_dir: Directory to save aligned objects
         image_type: Type of image ("binary", "colored", or "auto")
+        rotate_image: Whether to rotate images so largest diagonal is horizontal
         
     Returns:
         True if successful, False otherwise
@@ -97,7 +254,7 @@ def process_directory(input_dir: Path, output_dir: Path, image_type: str = "auto
     
     try:
         # Initialize alignment processor
-        aligner = ObjectAlignment(str(output_dir))
+        aligner = ObjectAlignment(str(output_dir), rotate_image)
         
         # Process directory
         results = aligner.process_directory(input_dir)
@@ -117,7 +274,7 @@ def process_directory(input_dir: Path, output_dir: Path, image_type: str = "auto
         return False
 
 
-def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_path: Path, image_name: str) -> bool:
+def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_path: Path, image_name: str, rotate_image: bool = False) -> bool:
     """
     Cut objects from original image based on mask.
     
@@ -126,6 +283,7 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
         masks_folder: Folder containing mask images
         output_path: Output folder for cut objects
         image_name: Base name of the image (without extension)
+        rotate_image: Whether to rotate images so largest diagonal is horizontal
         
     Returns:
         True if successful, False otherwise
@@ -212,6 +370,13 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
             # Apply mask to object image (set background to black)
             object_img[object_mask_cropped == 0] = [0, 0, 0]
             
+            # Apply rotation if requested - use the mask to determine the object's diagonal
+            if rotate_image:
+                # Calculate rotation angle based on the object's mask
+                rotation_angle = calculate_object_rotation_angle(object_mask_cropped)
+                if rotation_angle != 0:
+                    object_img = rotate_object_by_angle(object_img, rotation_angle)
+            
             # Save cut object
             output_filename = f"{image_name}_object_{i:02d}.png"
             output_file_path = output_path / output_filename
@@ -230,7 +395,7 @@ def cut_objects_from_image(original_folder: Path, masks_folder: Path, output_pat
         return False
 
 
-def process_folder(original_folder: Path, masks_folder: Path, output_path: Path) -> bool:
+def process_folder(original_folder: Path, masks_folder: Path, output_path: Path, rotate_image: bool = False) -> bool:
     """
     Process all images in the original folder and their corresponding masks.
     
@@ -238,6 +403,7 @@ def process_folder(original_folder: Path, masks_folder: Path, output_path: Path)
         original_folder: Folder containing original images
         masks_folder: Folder containing mask images
         output_path: Output folder for cut objects
+        rotate_image: Whether to rotate images so largest diagonal is horizontal
         
     Returns:
         True if successful, False otherwise
@@ -332,6 +498,13 @@ def process_folder(original_folder: Path, masks_folder: Path, output_path: Path)
                 
                 # Apply mask to object image (set background to black)
                 object_img[object_mask_cropped == 0] = [0, 0, 0]
+                
+                # Apply rotation if requested - use the mask to determine the object's diagonal
+                if rotate_image:
+                    # Calculate rotation angle based on the object's mask
+                    rotation_angle = calculate_object_rotation_angle(object_mask_cropped)
+                    if rotation_angle != 0:
+                        object_img = rotate_object_by_angle(object_img, rotation_angle)
                 
                 # Save cut object
                 output_filename = f"{image_name}_object_{i:02d}.png"
@@ -432,6 +605,7 @@ def main():
     output_path = Path('data/output/cut_objects')  # Output folder for cut objects
     process_single_image = False  # Set to True to process a single image, False to process whole folder
     single_image_name = '20250919_222417'  # Base name without extension (used only if process_single_image is True)
+    rotate_image = True  # Set to True to rotate images so largest diagonal is horizontal
     
     print("🎯 Object Cutting Application")
     print("=" * 60)
@@ -446,26 +620,30 @@ def main():
     
     if process_single_image:
         # Process single image
-        success = cut_objects_from_image(original_folder, masks_folder, output_path, single_image_name)
+        success = cut_objects_from_image(original_folder, masks_folder, output_path, single_image_name, rotate_image)
         
         if success:
             print("\n" + "=" * 60)
             print("🎉 Object Cutting Complete!")
             print(f"📂 Cut objects saved in: {output_path}")
             print("📚 Each object is saved as a separate image file")
+            if rotate_image:
+                print("🔄 Images rotated to orient largest diagonal horizontally")
             print("=" * 60)
         else:
             print("\n❌ Object cutting failed")
             sys.exit(1)
     else:
         # Process whole folder
-        success = process_folder(original_folder, masks_folder, output_path)
+        success = process_folder(original_folder, masks_folder, output_path, rotate_image)
         
         if success:
             print("\n" + "=" * 60)
             print("🎉 Folder Processing Complete!")
             print(f"📂 Cut objects saved in: {output_path}")
             print("📚 Each object is saved as a separate image file")
+            if rotate_image:
+                print("🔄 Images rotated to orient largest diagonal horizontally")
             print("=" * 60)
         else:
             print("\n❌ Folder processing failed")
