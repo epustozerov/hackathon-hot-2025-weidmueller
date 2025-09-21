@@ -23,7 +23,7 @@
 
         <!-- Summary Cards -->
         <div class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 bg-light h-100">
                     <div class="card-body text-center py-4">
                         <i class="fas fa-microscope fa-2x text-primary mb-2"></i>
@@ -32,21 +32,30 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 bg-light h-100">
                     <div class="card-body text-center py-4">
-                        <i class="fas fa-shapes fa-2x text-success mb-2"></i>
+                        <i class="fas fa-align-center fa-2x text-info mb-2"></i>
                         <div class="h4 mb-1">{{ objects|length }}</div>
-                        <small class="text-muted">Major Parts</small>
+                        <small class="text-muted">Aligned Objects</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="card border-0 bg-light h-100">
                     <div class="card-body text-center py-4">
-                        <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
-                        <div class="h4 mb-1">PASS</div>
-                        <small class="text-muted">Quality Status</small>
+                        <i class="fas fa-crosshairs fa-2x text-warning mb-2"></i>
+                        <div class="h4 mb-1">{{ matching_files|length }}</div>
+                        <small class="text-muted">Template Matches</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body text-center py-4">
+                        <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                        <div class="h4 mb-1">{{ (classification_files.edges|length + classification_files.aligned|length) if classification_files else 0 }}</div>
+                        <small class="text-muted">Classifications</small>
                     </div>
                 </div>
             </div>
@@ -100,41 +109,166 @@
         </div>
         {% endif %}
 
-        <!-- Parts Section -->
+        <!-- Aligned Objects Section -->
         {% if objects %}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
                 <h5 class="fw-medium mb-3">
-                    <i class="fas fa-shapes me-2 text-success"></i>
-                    Major Parts Only
+                    <i class="fas fa-align-center me-2 text-info"></i>
+                    Rotated & Aligned Objects
                 </h5>
                 <p class="text-muted small mb-4">
-                    Only the largest, most significant parts extracted for quality assessment. All smaller objects filtered out.
+                    Objects automatically rotated to horizontal diagonal orientation and aligned to center, standardized to 256x256 pixels for consistent analysis.
                 </p>
-                <div class="row" id="objects-gallery">
+                <div class="row" id="aligned-objects-gallery">
                     {% for object in objects %}
                     <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
                         <div class="card">
                             <div class="position-relative">
                                 <img src="{{ url_for('serve_image', session_id=session_id, image_type='objects', filename=object) }}" 
                                      class="card-img-top gallery-image" 
-                                     alt="Object {{ loop.index }}"
-                                     style="height: 150px; object-fit: contain; cursor: pointer;"
+                                     alt="Aligned Object {{ loop.index }}"
+                                     style="height: 150px; object-fit: contain; cursor: pointer; background: #f8f9fa;"
                                      data-bs-toggle="modal" 
                                      data-bs-target="#imageModal"
                                      data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='objects', filename=object) }}"
-                                     data-image-title="Object {{ loop.index }}">
+                                     data-image-title="Aligned Object {{ loop.index }}">
                                 <div class="position-absolute top-0 end-0 m-1">
-                                    <span class="badge bg-success">{{ loop.index }}</span>
+                                    <span class="badge bg-info">{{ loop.index }}</span>
+                                </div>
+                                <div class="position-absolute bottom-0 start-0 m-1">
+                                    <span class="badge bg-secondary text-xs">256×256</span>
                                 </div>
                             </div>
                             <div class="card-body p-2">
                                 <small class="text-muted">{{ object }}</small>
+                                <br><small class="text-info">Rotated & aligned</small>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Alignment Process:</strong> Each object is rotated to orient its largest diagonal horizontally, then centered and scaled to fit within a standardized 256×256 pixel canvas with 20% padding.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Template Matching Results Section -->
+        {% if matching_files %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-medium mb-3">
+                    <i class="fas fa-crosshairs me-2 text-warning"></i>
+                    Template Matching Results
+                </h5>
+                <p class="text-muted small mb-4">
+                    Visual overlays showing how detected parts align with reference templates for quality verification.
+                </p>
+                <div class="row" id="matching-gallery">
+                    {% for match_file in matching_files %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <div class="card">
+                            <div class="position-relative">
+                                <img src="{{ url_for('serve_image', session_id=session_id, image_type='matching', filename=match_file) }}" 
+                                     class="card-img-top gallery-image" 
+                                     alt="Template Match {{ loop.index }}"
+                                     style="height: 200px; object-fit: contain; cursor: pointer;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='matching', filename=match_file) }}"
+                                     data-image-title="Template Match {{ loop.index }}">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-warning">Match {{ loop.index }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ match_file }}</small>
+                                <br><small class="text-warning">Overlay comparison</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Classification Results Section -->
+        {% if classification_files and (classification_files.edges or classification_files.aligned) %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-medium mb-3">
+                    <i class="fas fa-chart-line me-2 text-info"></i>
+                    Classification Analysis
+                </h5>
+                <p class="text-muted small mb-4">
+                    Detailed edge analysis and alignment comparisons for comprehensive part classification.
+                </p>
+                
+                {% if classification_files.edges %}
+                <h6 class="fw-medium mb-3">
+                    <i class="fas fa-vector-square me-2"></i>Edge Comparisons
+                </h6>
+                <div class="row mb-4" id="edges-gallery">
+                    {% for edge_file in classification_files.edges %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <div class="card">
+                            <div class="position-relative">
+                                <img src="{{ url_for('serve_image', session_id=session_id, image_type='classification', filename=edge_file) }}" 
+                                     class="card-img-top gallery-image" 
+                                     alt="Edge Analysis {{ loop.index }}"
+                                     style="height: 200px; object-fit: contain; cursor: pointer;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='classification', filename=edge_file) }}"
+                                     data-image-title="Edge Analysis {{ loop.index }}">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-info">Edge {{ loop.index }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ edge_file }}</small>
+                                <br><small class="text-info">Edge detection</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if classification_files.aligned %}
+                <h6 class="fw-medium mb-3">
+                    <i class="fas fa-align-center me-2"></i>Aligned Comparisons
+                </h6>
+                <div class="row" id="aligned-gallery">
+                    {% for aligned_file in classification_files.aligned %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <div class="card">
+                            <div class="position-relative">
+                                <img src="{{ url_for('serve_image', session_id=session_id, image_type='classification', filename=aligned_file) }}" 
+                                     class="card-img-top gallery-image" 
+                                     alt="Aligned Comparison {{ loop.index }}"
+                                     style="height: 200px; object-fit: contain; cursor: pointer;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal"
+                                     data-image-src="{{ url_for('serve_image', session_id=session_id, image_type='classification', filename=aligned_file) }}"
+                                     data-image-title="Aligned Comparison {{ loop.index }}">
+                                <div class="position-absolute top-0 end-0 m-2">
+                                    <span class="badge bg-secondary">Align {{ loop.index }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <small class="text-muted">{{ aligned_file }}</small>
+                                <br><small class="text-secondary">Back-to-back aligned</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -158,7 +292,7 @@
         {% endif %}
 
         <!-- Download Section -->
-        {% if masks or objects %}
+        {% if masks or objects or matching_files or (classification_files and (classification_files.edges or classification_files.aligned)) %}
         <div class="card">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">
@@ -167,9 +301,34 @@
                 </h5>
             </div>
             <div class="card-body">
-                <p class="text-muted">
+                <p class="text-secondary">
                     Individual images can be downloaded by right-clicking and selecting "Save image as..."
                 </p>
+                
+                <!-- Download Buttons -->
+                <div class="row mb-4">
+                    {% if matching_files %}
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('download_results', session_id=session_id, download_type='template_matching') }}" 
+                           class="btn btn-warning btn-lg w-100">
+                            <i class="fas fa-crosshairs me-2"></i>
+                            Template Matching Results
+                            <small class="d-block">ZIP archive with overlay images</small>
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if classification_files and (classification_files.edges or classification_files.aligned) %}
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('download_results', session_id=session_id, download_type='classification_report') }}" 
+                           class="btn btn-info btn-lg w-100">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Template Comparison Report
+                            <small class="d-block">ZIP archive with analysis results</small>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
                 <div class="row">
                     <div class="col-md-6">
                         <h6>Available Downloads:</h6>
@@ -180,13 +339,22 @@
                             {% if objects %}
                             <li><i class="fas fa-cut me-2 text-success"></i>{{ objects|length }} Object files</li>
                             {% endif %}
+                            {% if matching_files %}
+                            <li><i class="fas fa-crosshairs me-2 text-warning"></i>{{ matching_files|length }} Template matches</li>
+                            {% endif %}
+                            {% if classification_files %}
+                            <li><i class="fas fa-chart-line me-2 text-info"></i>{{ (classification_files.edges|length + classification_files.aligned|length) if classification_files else 0 }} Classifications</li>
+                            {% endif %}
+                            <li><i class="fas fa-progress-bar me-2 text-muted"></i>Template matching progress <small class="text-secondary">- Not available in the online version</small></li>
+                            <li><i class="fas fa-calculator me-2 text-muted"></i>Part classification results (SSIM, MSE, etc.) <small class="text-secondary">- Not available in the online version</small></li>
                         </ul>
                     </div>
                     <div class="col-md-6">
                         <h6>File Formats:</h6>
                         <ul class="list-unstyled">
                             <li><i class="fas fa-file-image me-2 text-info"></i>PNG format</li>
-                            <li><i class="fas fa-palette me-2 text-info"></i>Transparent backgrounds</li>
+                            <li><i class="fas fa-file-archive me-2 text-info"></i>ZIP archives</li>
+                            <li><i class="fas fa-file-code me-2 text-info"></i>JSON reports</li>
                             <li><i class="fas fa-expand-arrows-alt me-2 text-info"></i>Original resolution</li>
                         </ul>
                     </div>

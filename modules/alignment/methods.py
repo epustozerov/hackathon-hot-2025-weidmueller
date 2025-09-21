@@ -12,9 +12,78 @@ from typing import List, Tuple, Dict, Optional
 import os
 
 
+def calculate_rotation_angle_from_object(image: np.ndarray, mask: np.ndarray = None) -> float:
+    """
+    Calculate the rotation angle to orient the object's longest dimension horizontally.
+    Uses minimum area rectangle (oriented bounding box) for more reliable results.
+    
+    Args:
+        image: Input image as numpy array
+        mask: Optional mask to identify the object (if None, uses the entire image)
+        
+    Returns:
+        Rotation angle in degrees
+    """
+    try:
+        # If no mask provided, create one from non-black pixels
+        if mask is None:
+            if len(image.shape) == 3:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = image
+            # Create mask from non-black pixels
+            _, mask = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+        
+        # Find contours in the mask
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if not contours:
+            return 0.0
+        
+        # Get the largest contour (main object)
+        largest_contour = max(contours, key=cv2.contourArea)
+        
+        if len(largest_contour) < 3:  # Need at least 3 points for minAreaRect
+            return 0.0
+        
+        # Get the minimum area rectangle (oriented bounding box)
+        rect = cv2.minAreaRect(largest_contour)
+        
+        # rect is ((center_x, center_y), (width, height), angle)
+        center, (width, height), angle = rect
+        
+        # OpenCV's minAreaRect angle is between -90 and 0 degrees
+        # The angle represents the rotation of the rectangle
+        
+        # We want the longer side to be horizontal
+        # If width > height, the rectangle is already "landscape"
+        # If height > width, we need to rotate by 90 degrees
+        
+        if width >= height:
+            # Width is the longer dimension, use angle as is
+            rotation_angle = angle
+        else:
+            # Height is the longer dimension, rotate by 90 degrees
+            rotation_angle = angle + 90
+        
+        # Normalize to [-90, 90] range
+        if rotation_angle > 90:
+            rotation_angle -= 180
+        elif rotation_angle < -90:
+            rotation_angle += 180
+        
+        # Return the angle needed to make the longest dimension horizontal
+        return rotation_angle
+        
+    except Exception as e:
+        print(f"⚠️ Error calculating rotation angle: {e}")
+        return 0.0
+
+
 def calculate_rotation_angle(image_shape: tuple) -> float:
     """
     Calculate the rotation angle to orient the largest diagonal horizontally.
+    (Legacy function - kept for backward compatibility)
     
     Args:
         image_shape: Tuple of (height, width) of the image
@@ -35,12 +104,13 @@ def calculate_rotation_angle(image_shape: tuple) -> float:
     return rotation_angle
 
 
-def rotate_image_to_horizontal_diagonal(image: np.ndarray) -> np.ndarray:
+def rotate_image_to_horizontal_diagonal(image: np.ndarray, mask: np.ndarray = None) -> np.ndarray:
     """
-    Rotate an image so that its largest diagonal is horizontally oriented.
+    Rotate an image so that the object's principal axis is horizontally oriented.
     
     Args:
         image: Input image as numpy array
+        mask: Optional mask to identify the object
         
     Returns:
         Rotated image
@@ -48,8 +118,12 @@ def rotate_image_to_horizontal_diagonal(image: np.ndarray) -> np.ndarray:
     if image is None or image.size == 0:
         return image
     
-    # Calculate rotation angle
-    rotation_angle = calculate_rotation_angle(image.shape)
+    # Calculate rotation angle based on the actual object
+    rotation_angle = calculate_rotation_angle_from_object(image, mask)
+    
+    # If no significant rotation needed, return original
+    if abs(rotation_angle) < 1.0:  # Less than 1 degree
+        return image
     
     # Get image center
     height, width = image.shape[:2]
@@ -71,6 +145,8 @@ def rotate_image_to_horizontal_diagonal(image: np.ndarray) -> np.ndarray:
     # Apply rotation
     rotated_image = cv2.warpAffine(image, rotation_matrix, (new_width, new_height), 
                                   borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+    
+    print(f"🔄 Rotated object by {rotation_angle:.1f}° to align principal axis horizontally")
     
     return rotated_image
 
@@ -139,6 +215,10 @@ class ObjectAlignment:
         mask_gray = cv2.cvtColor(mask_img, cv2.COLOR_BGR2GRAY)
         _, binary_mask = cv2.threshold(mask_gray, 1, 255, cv2.THRESH_BINARY)
         
+        # Invert colors: black pixels (0) should be treated as objects
+        binary_mask = cv2.bitwise_not(binary_mask)
+        print("🔄 Inverted mask colors: black pixels now represent objects")
+        
         # Find connected components in the mask
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_mask, connectivity=8)
         
@@ -154,8 +234,8 @@ class ObjectAlignment:
             x, y, w, h, area = stats[i]
             centroid = centroids[i]
             
-            # Skip very small objects
-            if area < 100:
+            # Skip small objects early (before processing)
+            if area < 1000000:
                 print(f"   ⏭️  Skipping small object {i} (area: {area})")
                 continue
             
@@ -207,6 +287,10 @@ class ObjectAlignment:
         # Create binary mask (non-black pixels)
         _, binary = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
         
+        # Invert colors: black pixels (0) should be treated as objects
+        binary = cv2.bitwise_not(binary)
+        print("🔄 Inverted mask colors: black pixels now represent objects")
+        
         # Find connected components
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
         
@@ -222,8 +306,8 @@ class ObjectAlignment:
             x, y, w, h, area = stats[i]
             centroid = centroids[i]
             
-            # Skip very small objects
-            if area < 100:
+            # Skip small objects early (before processing)
+            if area < 10000:
                 print(f"   ⏭️  Skipping small object {i} (area: {area})")
                 continue
             
@@ -263,7 +347,9 @@ class ObjectAlignment:
         
         # Apply rotation if enabled
         if self.rotate_image:
-            img = rotate_image_to_horizontal_diagonal(img)
+            img = rotate_image_to_horizontal_diagonal(img, mask)
+            # Also rotate the mask to keep it synchronized
+            mask = rotate_image_to_horizontal_diagonal(mask, mask)
         
         # Create a new image with the object centered
         aligned_img = np.zeros((target_size[1], target_size[0], 3), dtype=np.uint8)
