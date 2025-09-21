@@ -1,0 +1,474 @@
+{
+  "20250919_223238_object_17.png": {
+    "20250919_223238_object_17.png": {
+      "metrics": {
+        "ssim": 0.4279739896684058,
+        "mse": 8776.408354362055,
+        "psnr": 8.697635386986802,
+        "ncc": 0.42797428369522095,
+        "histogram_correlation": 0.9999998246484815,
+        "edge_similarity": 0.0033485567810531257
+      },
+      "alignment_info": {
+        "overlap_score": 0.28476713566657336,
+        "best_position": [
+          -1012,
+          -882
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.19635932549047386,
+      "keypoints_count": {
+        "object": 28,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_17_vs_20250919_223238_object_17_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_17_vs_20250919_223238_object_17_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_17.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_17.png"
+    },
+    "20250919_223238_object_14.png": {
+      "metrics": {
+        "ssim": 0.33865494931817414,
+        "mse": 13397.313901074347,
+        "psnr": 6.8606262779251725,
+        "ncc": 0.44048652052879333,
+        "histogram_correlation": 0.9938636427747185,
+        "edge_similarity": 0.02112757106920307
+      },
+      "alignment_info": {
+        "overlap_score": 0.25614034916980893,
+        "best_position": [
+          160,
+          261
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.30525632882675696,
+      "keypoints_count": {
+        "object": 23,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_17_vs_20250919_223238_object_14_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_17_vs_20250919_223238_object_14_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_17.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_14.png"
+    },
+    "20250919_223238_object_07.png": {
+      "metrics": {
+        "ssim": 0.6436130092757809,
+        "mse": 4981.591411370608,
+        "psnr": 11.157122569094984,
+        "ncc": 0.6588845252990723,
+        "histogram_correlation": 0.999873610457403,
+        "edge_similarity": 0.015529818344871332
+      },
+      "alignment_info": {
+        "overlap_score": 0.964252304135823,
+        "best_position": [
+          190,
+          51
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.35811571352302124,
+      "keypoints_count": {
+        "object": 24,
+        "template": 22
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_17_vs_20250919_223238_object_07_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_17_vs_20250919_223238_object_07_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_17.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_07.png"
+    },
+    "20250919_223238_object_09.png": {
+      "metrics": {
+        "ssim": 0.46863480445680455,
+        "mse": 9349.395155406391,
+        "psnr": 8.4229684509337,
+        "ncc": 0.544403612613678,
+        "histogram_correlation": 0.9934785125829765,
+        "edge_similarity": 0.03257371990561212
+      },
+      "alignment_info": {
+        "overlap_score": 0.2648122994901256,
+        "best_position": [
+          134,
+          306
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.3074196395450388,
+      "keypoints_count": {
+        "object": 23,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_17_vs_20250919_223238_object_09_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_17_vs_20250919_223238_object_09_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_17.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_09.png"
+    }
+  },
+  "20250919_223238_object_14.png": {
+    "20250919_223238_object_17.png": {
+      "metrics": {
+        "ssim": 0.40214522775418216,
+        "mse": 10260.00009943929,
+        "psnr": 8.019329958829575,
+        "ncc": 0.4255799949169159,
+        "histogram_correlation": 0.9995268695802484,
+        "edge_similarity": 0.016611946880972214
+      },
+      "alignment_info": {
+        "overlap_score": 0.6461665569270401,
+        "best_position": [
+          293,
+          285
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.310028723919556,
+      "keypoints_count": {
+        "object": 22,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_14_vs_20250919_223238_object_17_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_14_vs_20250919_223238_object_17_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_14.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_17.png"
+    },
+    "20250919_223238_object_14.png": {
+      "metrics": {
+        "ssim": 0.999819051794376,
+        "mse": 3.6866737948697557,
+        "psnr": 42.46445648907426,
+        "ncc": 0.9998195767402649,
+        "histogram_correlation": 0.9999972268969394,
+        "edge_similarity": 0.32104064740453553
+      },
+      "alignment_info": {
+        "overlap_score": 0.359462148608502,
+        "best_position": [
+          -602,
+          -736
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.24112926506296473,
+      "keypoints_count": {
+        "object": 23,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_14_vs_20250919_223238_object_14_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_14_vs_20250919_223238_object_14_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_14.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_14.png"
+    },
+    "20250919_223238_object_07.png": {
+      "metrics": {
+        "ssim": 0.5351189228760251,
+        "mse": 6812.158221421795,
+        "psnr": 9.797956343940816,
+        "ncc": 0.5635981559753418,
+        "histogram_correlation": 0.999521448381639,
+        "edge_similarity": 0.030076054390412537
+      },
+      "alignment_info": {
+        "overlap_score": 0.24397391222005546,
+        "best_position": [
+          685,
+          574
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.24566679885626796,
+      "keypoints_count": {
+        "object": 23,
+        "template": 22
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_14_vs_20250919_223238_object_07_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_14_vs_20250919_223238_object_07_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_14.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_07.png"
+    },
+    "20250919_223238_object_09.png": {
+      "metrics": {
+        "ssim": 0.48941948515220124,
+        "mse": 10246.208478266768,
+        "psnr": 8.025171727045416,
+        "ncc": 0.4989537000656128,
+        "histogram_correlation": 0.9851442834083812,
+        "edge_similarity": 0.015690617933453322
+      },
+      "alignment_info": {
+        "overlap_score": 0.9588342313968202,
+        "best_position": [
+          75,
+          29
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.43638999656433874,
+      "keypoints_count": {
+        "object": 22,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_14_vs_20250919_223238_object_09_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_14_vs_20250919_223238_object_09_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_14.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_09.png"
+    }
+  },
+  "20250919_223238_object_07.png": {
+    "20250919_223238_object_17.png": {
+      "metrics": {
+        "ssim": 0.6434483462201928,
+        "mse": 4986.3877714478585,
+        "psnr": 11.152943120407684,
+        "ncc": 0.6583219766616821,
+        "histogram_correlation": 0.9998864875663194,
+        "edge_similarity": 0.029488016782441766
+      },
+      "alignment_info": {
+        "overlap_score": 0.25004073377917047,
+        "best_position": [
+          479,
+          382
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.26970468485298005,
+      "keypoints_count": {
+        "object": 24,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_07_vs_20250919_223238_object_17_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_07_vs_20250919_223238_object_17_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_07.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_17.png"
+    },
+    "20250919_223238_object_14.png": {
+      "metrics": {
+        "ssim": 0.24598113508227734,
+        "mse": 15192.02933849052,
+        "psnr": 6.314645704388283,
+        "ncc": 0.3724297285079956,
+        "histogram_correlation": 0.9924224200493473,
+        "edge_similarity": 0.014701117080242175
+      },
+      "alignment_info": {
+        "overlap_score": 0.25618434632252407,
+        "best_position": [
+          102,
+          221
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.29999181043157375,
+      "keypoints_count": {
+        "object": 22,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_07_vs_20250919_223238_object_14_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_07_vs_20250919_223238_object_14_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_07.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_14.png"
+    },
+    "20250919_223238_object_07.png": {
+      "metrics": {
+        "ssim": 0.40375193622008065,
+        "mse": 7843.493105882759,
+        "psnr": 9.185708417099134,
+        "ncc": 0.40375223755836487,
+        "histogram_correlation": 0.9999997605174811,
+        "edge_similarity": 0.002461282138664849
+      },
+      "alignment_info": {
+        "overlap_score": 0.2790851352106178,
+        "best_position": [
+          -1104,
+          -1064
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.21359368759490827,
+      "keypoints_count": {
+        "object": 24,
+        "template": 22
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_07_vs_20250919_223238_object_07_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_07_vs_20250919_223238_object_07_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_07.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_07.png"
+    },
+    "20250919_223238_object_09.png": {
+      "metrics": {
+        "ssim": 0.37458809809701143,
+        "mse": 10574.976339279605,
+        "psnr": 7.8880095652123705,
+        "ncc": 0.4936264753341675,
+        "histogram_correlation": 0.9941638687745177,
+        "edge_similarity": 0.017986439357728326
+      },
+      "alignment_info": {
+        "overlap_score": 0.2648577862212059,
+        "best_position": [
+          92,
+          297
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.3071778915439245,
+      "keypoints_count": {
+        "object": 22,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_07_vs_20250919_223238_object_09_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_07_vs_20250919_223238_object_09_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_07.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_09.png"
+    }
+  },
+  "20250919_223238_object_09.png": {
+    "20250919_223238_object_17.png": {
+      "metrics": {
+        "ssim": 0.4582538461173254,
+        "mse": 8553.205834208822,
+        "psnr": 8.809514373497846,
+        "ncc": 0.4629873037338257,
+        "histogram_correlation": 0.998309186343888,
+        "edge_similarity": 0.03575128520885865
+      },
+      "alignment_info": {
+        "overlap_score": 0.23601426717953275,
+        "best_position": [
+          553,
+          490
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.27285576025681857,
+      "keypoints_count": {
+        "object": 23,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_09_vs_20250919_223238_object_17_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_09_vs_20250919_223238_object_17_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_17_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_09.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_17.png"
+    },
+    "20250919_223238_object_14.png": {
+      "metrics": {
+        "ssim": 0.4916629710128067,
+        "mse": 10187.505422676282,
+        "psnr": 8.050125079505268,
+        "ncc": 0.5012174844741821,
+        "histogram_correlation": 0.9855489127090802,
+        "edge_similarity": 0.03499873193000254
+      },
+      "alignment_info": {
+        "overlap_score": 0.24182626352726283,
+        "best_position": [
+          273,
+          341
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.2786862570478361,
+      "keypoints_count": {
+        "object": 22,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_09_vs_20250919_223238_object_14_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_09_vs_20250919_223238_object_14_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_14_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_09.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_14.png"
+    },
+    "20250919_223238_object_07.png": {
+      "metrics": {
+        "ssim": 0.5791748435672043,
+        "mse": 5991.877334775937,
+        "psnr": 10.35517446926705,
+        "ncc": 0.6166602969169617,
+        "histogram_correlation": 0.9987257052699586,
+        "edge_similarity": 0.024181844864415346
+      },
+      "alignment_info": {
+        "overlap_score": 0.4439712305145443,
+        "best_position": [
+          517,
+          422
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.2625435687666371,
+      "keypoints_count": {
+        "object": 23,
+        "template": 22
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_09_vs_20250919_223238_object_07_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_09_vs_20250919_223238_object_07_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_07_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_09.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_07.png"
+    },
+    "20250919_223238_object_09.png": {
+      "metrics": {
+        "ssim": 0.9998303444652795,
+        "mse": 3.2155180523343816,
+        "psnr": 43.058294087568676,
+        "ncc": 0.9998310208320618,
+        "histogram_correlation": 0.9999974689210896,
+        "edge_similarity": 0.33858662684895713
+      },
+      "alignment_info": {
+        "overlap_score": 0.3490520634793314,
+        "best_position": [
+          -592,
+          -812
+        ],
+        "transformation_applied": true
+      },
+      "point_similarity": 0.2379820226285887,
+      "keypoints_count": {
+        "object": 23,
+        "template": 23
+      },
+      "edge_image": "data/output/classification_results/edges/20250919_223238_object_09_vs_20250919_223238_object_09_edges.png",
+      "aligned_comparison": "data/output/classification_results/similarity/20250919_223238_object_09_vs_20250919_223238_object_09_aligned.png",
+      "object_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "template_aligned_path": "data/output/classification_results/aligned_comparisons/20250919_223238_object_09_aligned.png",
+      "object_path": "data/datasets/cut_objects/20250919_223238_object_09.png",
+      "template_path": "data/datasets/templates/20250919_223238_object_09.png"
+    }
+  }
+}
