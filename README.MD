@@ -2,9 +2,9 @@
 
 Our solution for the Weidmüller challenge at Hinterland of Things 2025. We built a computer vision pipeline that segments, extracts, aligns, and compares objects from images.
 
-The system has four main parts: **`app_segmentation.py`** uses SAM 2.0 for interactive image segmentation, **`app_alignment.py`** extracts and aligns individual objects from binary masks, **`app_matching.py`** performs sophisticated rotation/scale optimization for optimal object alignment, and **`app_classifier.py`** compares objects with templates using multiple similarity metrics. The pipeline uses advanced CV techniques including IoU, SSIM, keypoint extraction, and comprehensive rotation testing.
+The system has four main parts: **`app_segmentation.py`** uses SAM 2.0/2.1 for interactive image segmentation, **`app_alignment.py`** extracts and aligns individual objects from binary masks, **`app_matching.py`** performs sophisticated rotation/scale optimization for optimal object alignment, and **`app_classifier.py`** compares objects with templates using multiple similarity metrics. The pipeline uses advanced CV techniques including IoU, SSIM, keypoint extraction, and comprehensive rotation testing.
 
-Main features: SAM 2.1-based segmentation, binary mask processing, object extraction with rotation alignment, sophisticated template matching with rotation/scale combinations, and multi-metric similarity scoring. Outputs include segmented masks, aligned object cuts, overlay visualizations, and detailed JSON comparison results.
+Main features: SAM 2.0/2.1-based segmentation, binary mask processing, object extraction with rotation alignment, sophisticated template matching with rotation/scale combinations, and multi-metric similarity scoring. Outputs include segmented masks, aligned object cuts, overlay visualizations, and detailed JSON comparison results.
 
 ## 🎯 Challenge Background
 
