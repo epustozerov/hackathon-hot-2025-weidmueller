@@ -14,7 +14,7 @@ This solution addresses the **Weidmüller Challenge** from Hinterland Hack 2025:
 
 We also provide a **Flask web interface** for easy image processing:
 
-<img src="resourses/gui.png" alt="Web Application GUI" width="600">
+<img src="resources/gui.png" alt="Web Application GUI" width="600">
 
 - **Upload images** through a modern drag-and-drop interface
 - **Interactive segmentation** with optional point selection for guided processing  
